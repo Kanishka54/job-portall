@@ -6,14 +6,9 @@ import * as Sentry from '@sentry/node';
 import { nodeProfilingIntegration } from '@sentry/profiling-node';
 import userRoutes from './routes/userRoutes.js';
 import { ClerkWebhook } from './controllers/Controller.js';
+import webhookRoutes from './routes/webhookRoutes.js';
 
 
-
-
-
-// ======================
-// Initialize Sentry
-// ======================
 Sentry.init({
   dsn: process.env.SENTRY_DSN || "https://33d2cc89429421ca58fb565ea623877a@o4509837899595776.ingest.us.sentry.io/4509837908639744",
   integrations: [nodeProfilingIntegration()],
@@ -25,7 +20,6 @@ Sentry.init({
     return event;
   }
 });
-
 console.log('✅ Sentry initialized successfully');
 
 // ======================
@@ -48,8 +42,14 @@ const startServer = async () => {
 
     // Middlewares
     app.use(cors());
+    app.use(cors({
+      origin: 'http://localhost:5174', // allow Vite frontend
+    }));
 
-    app.post('/webhook/clerk', express.raw({ type: 'application/json' }), ClerkWebhook);
+    // ======================
+    // Webhook Route (NOW: /webhook)
+    // ======================
+    app.post('/webhook', express.raw({ type: 'application/json' }), ClerkWebhook);
 
     // All other routes use JSON parser
     app.use(express.json());
@@ -59,6 +59,7 @@ const startServer = async () => {
     // ======================
     app.get('/', (req, res) => res.send('Job Portal API is running!'));
     app.use('/api/users', userRoutes);
+    app.use('/api/webhooks', webhookRoutes); // still available if you want extra webhooks
 
     // Example error route
     app.get('/test-error', (req, res, next) => {
@@ -88,9 +89,12 @@ const startServer = async () => {
     app.listen(PORT, () => {
       console.log(`🚀 Server running on port ${PORT}`);
       console.log(`📌 API endpoints available at:`);
-      console.log(`  GET    http://localhost:${PORT}/api/users`);
-      console.log(`  POST   http://localhost:${PORT}/api/users`);
-      console.log(`  POST   http://localhost:${PORT}/webhook/clerk`);
+      console.log(` GET  http://localhost:${PORT}/`);
+      console.log(` GET  http://localhost:${PORT}/api/users`);
+      console.log(` POST http://localhost:${PORT}/api/users`);
+      console.log(` POST http://localhost:${PORT}/webhook   <-- ✅ updated`);
+      console.log(` POST http://localhost:${PORT}/api/webhooks`);
+      console.log(` GET  http://localhost:${PORT}/test-error`);
     });
 
   } catch (error) {
