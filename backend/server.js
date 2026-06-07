@@ -6,7 +6,7 @@ import * as Sentry from '@sentry/node';
 import { nodeProfilingIntegration } from '@sentry/profiling-node';
 import userRoutes from './routes/userRoutes.js';
 import { ClerkWebhook } from './controllers/Controller.js';
-import webhookRoutes from './routes/webhookRoutes.js';
+// import webhookRoutes from './routes/webhookRoutes.js';
 
 
 Sentry.init({
@@ -41,11 +41,10 @@ const startServer = async () => {
     }
 
     // Middlewares
-    app.use(cors());
-    app.use(cors({
-      origin: 'http://localhost:5174', // allow Vite frontend
-    }));
-
+  app.use(cors({
+  origin: "*",
+  credentials: true
+}));
     // ======================
     // Webhook Route (NOW: /webhook)
     // ======================
@@ -59,7 +58,7 @@ const startServer = async () => {
     // ======================
     app.get('/', (req, res) => res.send('Job Portal API is running!'));
     app.use('/api/users', userRoutes);
-    app.use('/api/webhooks', webhookRoutes); // still available if you want extra webhooks
+    // app.use('/api/webhooks', webhookRoutes); // still available if you want extra webhooks
 
     // Example error route
     app.get('/test-error', (req, res, next) => {
